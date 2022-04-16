@@ -85,9 +85,10 @@ loop:
 	end:
 		addi $t0, $t0, 1
 
-	sw $t2, ($t5)		#store integer in array
-	li $v0, 1
-	move $a0, $t2
+	mtc1 $t2, $f12
+	cvt.s.w $f12, $f12
+	swc1 $f12, ($t5)		#store integer in array
+	li $v0, 2
 	syscall
 	li $a0, 32
 	li $v0, 11
@@ -97,15 +98,19 @@ loop:
 	j loop
 endloop:
 
-#move $t5, $s2	#initialize incrementing address
-#loop1:
-#	beq $t1, 0, endloop1
-#	l.s $f12, ($t5)
-#	addi $t5, $t5, 4	#increment the address
-#	li $v0, 2
-#	syscall
-#	subi $t1, $t1, 1
-#endloop1:
+move $t5, $s2	#initialize incrementing address
+loop1:
+	beq $t1, 0, endloop1
+	l.s $f12, ($t5)
+	addi $t5, $t5, 4	#increment the address
+	li $v0, 2
+	syscall
+	li $a0, 32
+	li $v0, 11
+	syscall
+	subi $t1, $t1, 1
+	j loop1
+endloop1:
 
 
 #print integer
