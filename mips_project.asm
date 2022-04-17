@@ -59,7 +59,7 @@ parseloop1:
 end1:
 	addi $t0, $t0, 1
 
-move $s1, $t2	#length of matrix (4)
+move $s1, $t2	#order of matrix (4)
 mul $t4, $s1, $s1	#number of elements in matrix (16)
 sll $a0, $t4, 2		#size of array in bytes
 li  $v0, 9
