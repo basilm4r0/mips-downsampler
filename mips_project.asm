@@ -60,6 +60,7 @@ end1:
 	addi $t0, $t0, 1
 
 move $s1, $t2	#order of matrix (4)
+move $t9, $s1	#variable matrix order (changes as matrix is downsampled)
 mul $t4, $s1, $s1	#number of elements in matrix (16)
 sll $a0, $t4, 2		#size of array in bytes
 li  $v0, 9
@@ -124,3 +125,41 @@ move	$a0, $s6
 la	$a1, buffer
 li	$a2, 40
 syscall
+
+iterate:
+	li $t0, 0
+	li $t1, 0
+	li $t2, 0
+	li $t3, 0
+	li $t4, 0
+	iterate_column:
+		beq $t0, %t9
+		li $t1, 0
+		iterate_row:
+			beq $t1, %t9, iterate_row_end
+			mul $t2, $t0, %t9
+			add $t3, $t2, $t1
+			l.s $f0, $t3($s2)
+			add $t4, $t3, 1
+			l.s $f1, $t4($s2)
+			add $t5, $t4, %t9
+			l.s $f2, $t5($s2)
+			add $t6, $t, 1
+			l.s $f3, $t6($s2)
+			b downsample
+			str $0, $t3($s2)
+			str $0, $t4($s2)
+			str $0, $t5($s2)
+			str $0, $t6($s2)
+			ssl $t7, $t2, 2
+			ssl $t8, $t1, 1
+			add $t7, $t7, $t8
+			s.s $f0, $t7($s2)
+			add $t1, $t1, 2
+			b iterate_row
+		iterate_row_end:
+		add $t0, $t0, 2
+		b iterate_column
+	iterate_column_end:
+	ssl %t9, %t9, 1
+jr $ra
