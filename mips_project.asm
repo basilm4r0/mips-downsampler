@@ -1,10 +1,13 @@
 .data
 fin: .asciiz "/home/basilmari/Desktop/mips_project/input.txt" # filename for input
 fout: .asciiz "/home/basilmari/Desktop/mips_project/output.txt" # filename for output
-buffer: .space 1024
+buffer: .space 4096
+fp1: .float 1.5
+fp2: .float 0.5
+fp4: .float 4
 
 .text
-#open a file for writing
+#open a file for reading
 li	$v0, 13       # system call for open file
 la	$a0, fin      # board file name
 li	$a1, 0        # Open for reading
@@ -16,7 +19,7 @@ move	$s6, $v0      # save the file descriptor
 li	$v0, 14       # system call for read from file
 move	$a0, $s6      # file descriptor
 la	$a1, buffer   # address of buffer to which to read
-li	$a2, 1024     # hardcoded buffer length
+li	$a2, 4096     # hardcoded buffer length
 syscall            # read from file
 
 # Print string
@@ -29,19 +32,10 @@ li	$v0, 16       # system call for close file
 move	$a0, $s6      # file descriptor to close
 syscall            # close file
 
-# open output file
-li	$v0, 13
-la	$a0, fout
-li	$a1, 1
-li	$a2, 0
-syscall
-#move	$s6, $v0
-
 la $s0, buffer	#address of buffer
 move $t0, $s0	#incrementing address
 li $t1, 0		#counter
 li $t2, 0		#converted integer value
-
 
 
 # loop for parsing the buffer
@@ -119,6 +113,14 @@ endloop1:
 #move $a0, $t2
 #syscall
 
+# open output file
+li	$v0, 13
+la	$a0, fout
+li	$a1, 1
+li	$a2, 0
+syscall
+move	$s6, $v0
+
 # write to output file
 li	$v0, 15
 move	$a0, $s6
@@ -133,16 +135,16 @@ iterate:
 	li $t3, 0
 	li $t4, 0
 	iterate_column:
-		beq $t0, %t9
+		beq $t0, $t9, iterate_column_end
 		li $t1, 0
 		iterate_row:
-			beq $t1, %t9, iterate_row_end
-			mul $t2, $t0, %t9
+			beq $t1, $t9, iterate_row_end
+			mul $t2, $t0, $t9
 			add $t3, $t2, $t1
 			l.s $f0, $t3($s2)
 			add $t4, $t3, 1
 			l.s $f1, $t4($s2)
-			add $t5, $t4, %t9
+			add $t5, $t4, $t9
 			l.s $f2, $t5($s2)
 			add $t6, $t, 1
 			l.s $f3, $t6($s2)
@@ -151,15 +153,49 @@ iterate:
 			str $0, $t4($s2)
 			str $0, $t5($s2)
 			str $0, $t6($s2)
-			ssl $t7, $t2, 2
-			ssl $t8, $t1, 1
-			add $t7, $t7, $t8
-			s.s $f0, $t7($s2)
+			ssl $t2, $t2, 2
+			ssl $t3, $t1, 1
+			add $t2, $t2, $t3
+			s.s $f0, $t2($s2)
 			add $t1, $t1, 2
 			b iterate_row
 		iterate_row_end:
 		add $t0, $t0, 2
 		b iterate_column
 	iterate_column_end:
-	ssl %t9, %t9, 1
+	ssl $t9, $t9, 1
 jr $ra
+
+
+downsample:
+	bne $s3, 1, l1	#branch if method is not mean
+	l.s $f4, fp1
+	l.s $f5, fp2
+	l.s $f6, fp4
+	remu $t4, $t0, 2
+	bne $t4, 1, l2
+	mul.s $f0, $f0, $f4
+	mul.s $f1, $f1, $f5
+	mul.s $f2, $f2, $f4
+	mul.s $f3, $f3, $f5
+	add.s $f0, $f0, $f1
+	add.s $f0, $f0, $f2
+	add.s $f0, $f0, $f3
+	div.s $f0, $f0, $f6
+	j downsample_end
+	l2:
+	bne $t4, 0, l3
+	mul.s $f0, $f0, $f5
+	mul.s $f1, $f1, $f4
+	mul.s $f2, $f2, $f5
+	mul.s $f3, $f3, $f4
+	add.s $f0, $f0, $f1
+	add.s $f0, $f0, $f2
+	add.s $f0, $f0, $f3
+	div.s $f0, $f0, $f6
+	j downsample_end
+	l1:
+	bne $s3, 2, l3
+	bne
+	l3:
+downsample_end:
