@@ -4,6 +4,7 @@ fout: .asciiz "/home/basilmari/Desktop/mips_project/output.txt" # filename for o
 buffer: .space 4096
 fp1: .float 1.5
 fp2: .float 0.5
+fp3: .float 2
 fp4: .float 4
 
 .text
@@ -128,6 +129,10 @@ la	$a1, buffer
 li	$a2, 40
 syscall
 
+process:
+	beq $t7, $s4, process_end:
+process_end:
+
 iterate:
 	li $t0, 0
 	li $t1, 0
@@ -173,7 +178,7 @@ downsample:
 	l.s $f5, fp2
 	l.s $f6, fp4
 	remu $t4, $t0, 2
-	bne $t4, 1, l2
+	bne $t4, 1, l2		#branch if not on odd level
 	mul.s $f0, $f0, $f4
 	mul.s $f1, $f1, $f5
 	mul.s $f2, $f2, $f4
@@ -184,7 +189,7 @@ downsample:
 	div.s $f0, $f0, $f6
 	j downsample_end
 	l2:
-	bne $t4, 0, l3
+	bne $t4, 0, l1		#branch if not on even level
 	mul.s $f0, $f0, $f5
 	mul.s $f1, $f1, $f4
 	mul.s $f2, $f2, $f5
@@ -195,7 +200,35 @@ downsample:
 	div.s $f0, $f0, $f6
 	j downsample_end
 	l1:
-	bne $s3, 2, l3
-	bne
+	bne $s3, 2, l3		#branch if method is not median
+	l.s $f5, fp3
+	c.le.s $f0, $f1
+	bc1t l4
+	l.s $f4, $f0
+	l.s $f0, $f1
+	l.s $f1, $f4
+	l4:
+	c.le.s $f2, $f3
+	bc1t l5
+	l.s $f4, $f2
+	l.s $f2, $f3
+	l.s $f3, $f4
+	l5:
+	c.le.s $f0, $f2
+	bc1t l6
+	l.s $f4, $f0
+	l.s $f0, $f2
+	l.s $f2, $f4
+	l6:
+	c.le.s $f1, $f3
+	bc1t l7
+	l.s $f4, $f1
+	l.s $f1, $f3
+	l.s $f3, $f4
+	l7:
+	add.s $f0, $f1, $f2
+	div.s $f0, $f0, $f5
+	j downsample_end
 	l3:
 downsample_end:
+jr $ra
