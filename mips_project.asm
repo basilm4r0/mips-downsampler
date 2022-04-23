@@ -81,7 +81,7 @@ loop:
 		addi $t0, $t0, 1
 		j parseloop
 	end:
-		addi $t0, $t0, 1
+	addi $t0, $t0, 1
 
 	mtc1 $t2, $f12
 	cvt.s.w $f12, $f12
@@ -127,6 +127,22 @@ move $s4, $v0
 
 j process
 
+li $t1, 0
+mul $t4, $t9, $t9
+move $t5, $s2	#initialize incrementing address
+loop2:
+	beq $t1, $t9, endloop2
+	l.s $f12, ($t5)
+	addi $t5, $t5, 4	#increment the address
+	li $v0, 2
+	syscall
+	li $a0, 32
+	li $v0, 11
+	syscall
+	add $t1, $t1, 1
+	j loop2
+endloop2:
+
 # open output file
 li	$v0, 13
 la	$a0, fout
@@ -139,14 +155,14 @@ move	$s6, $v0
 li	$v0, 15
 move	$a0, $s6
 la	$a1, buffer
-li	$a2, 40
+li	$a2, 100
 syscall
 
 j end_program	#end of main code block. jump to end of program.
 
 
 process:
-	beq $t7, $s4, process_end:
+	beq $t7, $s4, process_end
 	j iterate
 	add $t7, $t7, 1
 process_end:
@@ -165,29 +181,55 @@ iterate:
 			beq $t1, $t9, iterate_row_end
 			mul $t2, $t0, $t9
 			add $t3, $t2, $t1
-			l.s $f0, $t3($s2)
-			add $t4, $t3, 1
-			l.s $f1, $t4($s2)
+			sll $t3, $t3, 2
+			add $t3, $t3, $s2
+			l.s $f0, ($t3)
+			sub $t3, $t3, $s2
+			srl $t3, $t3, 2
+			add $t4, $t3, 4
+			sll $t4, $t4, 2
+			add $t4, $t4, $s2
+			l.s $f1, ($t4)
+			sub $t4, $t4, $s2
+			srl $t4, $t4, 2
 			add $t5, $t4, $t9
-			l.s $f2, $t5($s2)
-			add $t6, $t, 1
-			l.s $f3, $t6($s2)
+			sll $t5, $t5, 2
+			add $t5, $t5, $s2
+			l.s $f2, ($t5)
+			sub $t5, $t5, $s2
+			srl $t5, $t5, 2
+			add $t6, $t5, 1
+			sll $t6, $t6, 2
+			add $t6, $t6, $s2
+			l.s $f3, ($t6)
+			sub $t6, $t6, $s2
+			srl $t6, $t6, 2
 			j downsample
-			str $0, $t3($s2)
-			str $0, $t4($s2)
-			str $0, $t5($s2)
-			str $0, $t6($s2)
-			ssl $t2, $t2, 2
-			ssl $t3, $t1, 1
+			add $t3, $t3, $s2
+			sw $0, ($t3)
+			sub $t3, $t3, $s2
+			add $t4, $t4, $s2
+			sw $0, ($t4)
+			sub $t4, $t4, $s2
+			add $t5, $t5, $s2
+			sw $0, ($t5)
+			sub $t5, $t5, $s2
+			add $t6, $t6, $s2
+			sw $0, ($t6)
+			sub $t6, $t6, $s2
+			srl $t2, $t2, 2
+			srl $t3, $t1, 1
 			add $t2, $t2, $t3
-			s.s $f0, $t2($s2)
+			add $t2, $t2, $s2
+			s.s $f0, ($t2)
+			sub $t2, $t2, $s2
 			add $t1, $t1, 2
 			j iterate_row
 		iterate_row_end:
 		add $t0, $t0, 2
 		j iterate_column
 	iterate_column_end:
-	ssl $t9, $t9, 1
+	srl $t9, $t9, 1
 jr $ra
 
 
@@ -223,27 +265,27 @@ downsample:
 	l.s $f5, fp3
 	c.le.s $f0, $f1
 	bc1t l4
-	l.s $f4, $f0
-	l.s $f0, $f1
-	l.s $f1, $f4
+	mov.s $f4, $f0
+	mov.s $f0, $f1
+	mov.s $f1, $f4
 	l4:
 	c.le.s $f2, $f3
 	bc1t l5
-	l.s $f4, $f2
-	l.s $f2, $f3
-	l.s $f3, $f4
+	mov.s $f4, $f2
+	mov.s $f2, $f3
+	mov.s $f3, $f4
 	l5:
 	c.le.s $f0, $f2
 	bc1t l6
-	l.s $f4, $f0
-	l.s $f0, $f2
-	l.s $f2, $f4
+	mov.s $f4, $f0
+	mov.s $f0, $f2
+	mov.s $f2, $f4
 	l6:
 	c.le.s $f1, $f3
 	bc1t l7
-	l.s $f4, $f1
-	l.s $f1, $f3
-	l.s $f3, $f4
+	mov.s $f4, $f1
+	mov.s $f1, $f3
+	mov.s $f3, $f4
 	l7:
 	add.s $f0, $f1, $f2
 	div.s $f0, $f0, $f5
