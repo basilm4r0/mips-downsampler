@@ -6,6 +6,8 @@ fp1: .float 1.5
 fp2: .float 0.5
 fp3: .float 2
 fp4: .float 4
+prompt1: .asciiz "Enter \"1\" to downsample using mean or \"2\" to downsample using median:\n"
+prompt2: .asciiz "Ender the level of downsampling you wish to perform:\n"
 
 .text
 #open a file for reading
@@ -46,7 +48,7 @@ parseloop1:
 	beq $t3, 0, end1
 	blt $t3, 48, end1
 	bgt $t3, 57, end1
-	andi $t3,$t3,0x0F # where $s3 contains the ascii digit
+	andi $t3,$t3,0x0F # where $t3 contains the ascii digit
 	mul $t2, $t2, 10
 	add $t2, $t2, $t3
 	addi $t0, $t0, 1
@@ -73,7 +75,7 @@ loop:
 		beq $t3, 0, end
 		blt $t3, 48, end
 		bgt $t3, 57, end
-		andi $t3,$t3,0x0F # where $s3 contains the ascii digit
+		andi $t3,$t3,0x0F # where $t3 contains the ascii digit
 		mul $t2, $t2, 10
 		add $t2, $t2, $t3
 		addi $t0, $t0, 1
@@ -108,11 +110,22 @@ loop1:
 	j loop1
 endloop1:
 
+# Print prompt
+li	$v0, 4
+la 	$a0, prompt1
+syscall
+li $v0, 5
+syscall
+move $s3, $v0
+# Print prompt
+li	$v0, 4
+la 	$a0, prompt2
+syscall
+li $v0, 5
+syscall
+move $s4, $v0
 
-#print integer
-#li $v0, 1
-#move $a0, $t2
-#syscall
+j process
 
 # open output file
 li	$v0, 13
@@ -129,9 +142,15 @@ la	$a1, buffer
 li	$a2, 40
 syscall
 
+j end_program	#end of main code block. jump to end of program.
+
+
 process:
 	beq $t7, $s4, process_end:
+	j iterate
+	add $t7, $t7, 1
 process_end:
+jr $ra
 
 iterate:
 	li $t0, 0
@@ -153,7 +172,7 @@ iterate:
 			l.s $f2, $t5($s2)
 			add $t6, $t, 1
 			l.s $f3, $t6($s2)
-			b downsample
+			j downsample
 			str $0, $t3($s2)
 			str $0, $t4($s2)
 			str $0, $t5($s2)
@@ -163,10 +182,10 @@ iterate:
 			add $t2, $t2, $t3
 			s.s $f0, $t2($s2)
 			add $t1, $t1, 2
-			b iterate_row
+			j iterate_row
 		iterate_row_end:
 		add $t0, $t0, 2
-		b iterate_column
+		j iterate_column
 	iterate_column_end:
 	ssl $t9, $t9, 1
 jr $ra
@@ -232,3 +251,5 @@ downsample:
 	l3:
 downsample_end:
 jr $ra
+
+end_program:
