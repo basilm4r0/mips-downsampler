@@ -6,8 +6,8 @@ fp1: .float 1.5
 fp2: .float 0.5
 fp3: .float 2
 fp4: .float 4
-prompt1: .asciiz "Enter \"1\" to downsample using mean or \"2\" to downsample using median:\n"
-prompt2: .asciiz "Ender the level of downsampling you wish to perform:\n"
+prompt1: .asciiz "\nEnter \"1\" to downsample using mean or \"2\" to downsample using median:\n"
+prompt2: .asciiz "\nEnder the level of downsampling you wish to perform:\n"
 
 .text
 #open a file for reading
@@ -117,7 +117,7 @@ syscall
 li $v0, 5
 syscall
 move $s3, $v0
-# Print prompt
+# Print second prompt
 li	$v0, 4
 la 	$a0, prompt2
 syscall
@@ -125,7 +125,8 @@ li $v0, 5
 syscall
 move $s4, $v0
 
-j process
+li $t7, 0 #initialize process function counter to 0
+jal process
 
 li $t1, 0
 mul $t4, $t9, $t9
@@ -163,7 +164,7 @@ j end_program	#end of main code block. jump to end of program.
 
 process:
 	beq $t7, $s4, process_end
-	j iterate
+	jal iterate
 	add $t7, $t7, 1
 process_end:
 jr $ra
@@ -179,12 +180,12 @@ iterate:
 		li $t1, 0
 		iterate_row:
 			beq $t1, $t9, iterate_row_end
-			mul $t2, $t0, $t9
-			add $t3, $t2, $t1
-			sll $t3, $t3, 2
-			add $t3, $t3, $s2
-			l.s $f0, ($t3)
-			sub $t3, $t3, $s2
+			mul $t2, $t0, $t9	#multiply matrix order by row and store in $t2
+			add $t3, $t2, $t1	#add linear row index to column index to find index of first element
+			sll $t3, $t3, 2		#multiply index by 4 to iterate by words (4 bytes)
+			add $t3, $t3, $s2	#add relative address of element to address of array to find element address
+			l.s $f0, ($t3)		#load first element
+			sub $t3, $t3, $s2	#reverse previous two steps
 			srl $t3, $t3, 2
 			add $t4, $t3, 4
 			sll $t4, $t4, 2
@@ -204,7 +205,7 @@ iterate:
 			l.s $f3, ($t6)
 			sub $t6, $t6, $s2
 			srl $t6, $t6, 2
-			j downsample
+			jal downsample
 			add $t3, $t3, $s2
 			sw $0, ($t3)
 			sub $t3, $t3, $s2
@@ -238,7 +239,7 @@ downsample:
 	l.s $f4, fp1
 	l.s $f5, fp2
 	l.s $f6, fp4
-	remu $t4, $t0, 2
+	remu $t4, $t0, 2	#check if level is even or odd to determine window
 	bne $t4, 1, l2		#branch if not on odd level
 	mul.s $f0, $f0, $f4
 	mul.s $f1, $f1, $f5
@@ -274,7 +275,7 @@ downsample:
 	mov.s $f4, $f2
 	mov.s $f2, $f3
 	mov.s $f3, $f4
-	l5:
+	l5:					#sorting area
 	c.le.s $f0, $f2
 	bc1t l6
 	mov.s $f4, $f0
