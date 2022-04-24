@@ -198,8 +198,8 @@ process:
 					l.s $f4, fp1
 					l.s $f5, fp2
 					l.s $f6, fp4
-					remu $t4, $t0, 2	#check if level is even or odd to determine window
-					bne $t4, 1, l2		#branch if not on odd level
+					remu $s5, $t0, 2	#check if level is even or odd to determine window
+					bne $s5, 1, l2		#branch if not on odd level
 					mul.s $f0, $f0, $f4
 					mul.s $f1, $f1, $f5
 					mul.s $f2, $f2, $f4
@@ -210,7 +210,7 @@ process:
 					div.s $f0, $f0, $f6
 					j downsample_end
 					l2:
-					bne $t4, 0, l1		#branch if not on even level
+					bne $s5, 0, l1		#branch if not on even level
 					mul.s $f0, $f0, $f5
 					mul.s $f1, $f1, $f4
 					mul.s $f2, $f2, $f5
@@ -261,6 +261,7 @@ process:
 				srl $t2, $t2, 2		#calculating address to store result in
 				srl $t3, $t1, 1
 				add $t2, $t2, $t3
+				sll $t2, $t2, 2
 				add $t2, $t2, $s2
 				s.s $f0, ($t2)		#store result in array
 				add $t1, $t1, 2
