@@ -7,7 +7,7 @@ fp2: .float 0.5
 fp3: .float 2
 fp4: .float 4
 prompt1: .asciiz "\nEnter \"1\" to downsample using mean or \"2\" to downsample using median:\n"
-prompt2: .asciiz "\nEnder the level of downsampling you wish to perform:\n"
+prompt2: .asciiz "Ender the level of downsampling you wish to perform:\n"
 
 .text
 #open a file for reading
@@ -85,12 +85,7 @@ loop:
 
 	mtc1 $t2, $f12
 	cvt.s.w $f12, $f12
-	swc1 $f12, ($t5)		#store integer in array
-	li $v0, 2
-	syscall
-	li $a0, 32
-	li $v0, 11
-	syscall
+	s.s $f12, ($t5)		#store float in array
 	addi $t5, $t5, 4	#increment the address
 	addi $t1, $t1, 1	#increment loop counter
 	j loop
@@ -163,7 +158,8 @@ j end_program	#end of main code block. jump to end of program.
 
 
 process:
-	beq $t7, $s4, process_end
+	add $t7, $t7, 1
+	bgt $t7, $s4, process_end
 
 	iterate:
 		li $t0, 0
@@ -272,8 +268,7 @@ process:
 		iterate_column_end:
 		srl $t9, $t9, 1
 
-
-	add $t7, $t7, 1
+	j process
 process_end:
 jr $ra
 
