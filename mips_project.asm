@@ -174,7 +174,6 @@ process:
 		li $t5, 0
 		li $t6, 0
 		li $t8, 0
-		li $t9, 0
 
 		iterate_column:
 			beq $t0, $t9, iterate_column_end
