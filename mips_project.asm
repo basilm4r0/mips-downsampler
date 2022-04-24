@@ -188,7 +188,7 @@ process:
 				add $t4, $t3, 4		#set $t4 = address of the second element to access
 				l.s $f1, ($t4)
 				sll $t8, $t9, 2
-				add $t5, $t4, $t8	#$t5 = address of third element to access
+				add $t5, $t3, $t8	#$t5 = address of third element to access
 				l.s $f2, ($t5)
 				add $t6, $t5, 4		#$t6 = address of fourth element to access
 				l.s $f3, ($t6)
@@ -200,8 +200,8 @@ process:
 					l.s $f6, fp4
 					remu $s5, $t0, 2	#check if level is even or odd to determine window
 					bne $s5, 1, l2		#branch if not on odd level
-					mul.s $f0, $f0, $f4
-					mul.s $f1, $f1, $f5
+					mul.s $f0, $f0, $f5
+					mul.s $f1, $f1, $f4
 					mul.s $f2, $f2, $f4
 					mul.s $f3, $f3, $f5
 					add.s $f0, $f0, $f1
@@ -211,8 +211,8 @@ process:
 					j downsample_end
 					l2:
 					bne $s5, 0, l1		#branch if not on even level
-					mul.s $f0, $f0, $f5
-					mul.s $f1, $f1, $f4
+					mul.s $f0, $f0, $f4
+					mul.s $f1, $f1, $f5
 					mul.s $f2, $f2, $f5
 					mul.s $f3, $f3, $f4
 					add.s $f0, $f0, $f1
