@@ -126,10 +126,10 @@ li $t7, 1 #initialize process function counter to 0
 jal process
 
 li $t1, 0
-mul $t4, $t9, $t9
+mul $t3, $t9, $t9
 move $t5, $s2	#initialize incrementing address
 loop2:			#printing result matrix to terminal
-	beq $t1, $t4, endloop2
+	beq $t1, $t3, endloop2
 	l.s $f12, ($t5)
 	addi $t5, $t5, 4	#increment the address
 	li $v0, 2
@@ -141,53 +141,6 @@ loop2:			#printing result matrix to terminal
 	j loop2
 endloop2:
 
-li $t1, 0
-l.s $f13, fp5
-move $t3, $s0
-move $t5, $s2	#initialize incrementing address
-flt_to_int:			#
-	beq $t1, $t4, flt_to_int_end
-	l.s $f12, ($t5)
-	mul.s $f12, $f12, $f13
-	cvt.w.s $f11, $f12
-	mfc1 $t2, $f11
-
-	la $t0, chararray
-	li $s3, 10
-	li $t6, 0
-	li $t9, 63
-	add $t0, $t0, $t9
-	tokenize:
-		bne $t6, 2, not_dot
-		li $t7, 46
-		sb $t7, ($t0)
-		sub $t0, $t0, 1
-		add $t6, $t6, 1
-		not_dot:
-		divu $t2, $s3	#find first digit
-		mflo $t2
-		mfhi $t8
-		addiu $t8, $t8, 48
-		sb $t8, ($t0)
-		sub $t0, $t0, 1
-		add $t6, $t6, 1
-		bne $t2, 0, tokenize
-	li $t7, 32
-	sb $t7, ($t0)
-	sub $t0, $t0, 1
-	add $t6, $t6, 1
-	write_to_buffer:
-		lb $t8, ($t0)
-		sb $t8, ($t3)
-		sub $t2, $t2, 1
-		add $t3, $t3, 1
-		bgt $t2, 0, write_to_buffer
-	addi $t5, $t5, 4	#increment the address
-	add $t1, $t1, 1
-	j flt_to_int
-flt_to_int_end:
-
-
 # open output file
 li	$v0, 13
 la	$a0, fout
@@ -195,6 +148,31 @@ li	$a1, 1
 li	$a2, 0
 syscall
 move	$s6, $v0
+
+li $t1, 0
+la $t0, chararray
+l.s $f13, fp5
+move $t2, $s2	#initialize incrementing address
+flt_to_int:			#
+	beq $t1, $t3, flt_to_int_end
+	l.s $f12, ($t2)
+	mul.s $f12, $f12, $f13
+	cvt.w.s $f11, $f12
+	mfc1 $a0, $f11
+
+	move $a1, $t0
+	jal int2str		#convert integer to string
+
+	li $a2, 31
+	move $a1, $v0	#write string to output file
+	move $a0, $s6
+	li $v0, 15
+	syscall
+
+	addi $t2, $t2, 4	#increment the float array address
+	add $t1, $t1, 1
+	j flt_to_int
+flt_to_int_end:
 
 # write to output file
 li	$v0, 15
@@ -321,6 +299,28 @@ process:
 process_end:
 jr $ra
 
-
+int2str:
+	li	$t7, 10	# $t7 = divisor = 10
+	li	$a3, 46
+	li	$t6, 0
+	li $t8, 32
+	addiu	$v0, $a1, 31	# start at end of buffer
+	sb	$zero, 0($v0)	# store a NULL character
+	addiu $v0, $v0, -1
+	add $t6, $t6, 1
+	sb $t8, 0($v0)
+L1:	bne 	$t6, 3, L2
+	addiu	$v0, $v0, -1
+	add	$t6, $t6, 1
+	sb	$a3, 0($v0)
+L2:	divu	$a0, $t7	# LO  = value/10, HI = value%10
+	mflo	$a0	# $a0 = value/10
+	mfhi	$t5	# $t5 = value%10
+	addiu	$t5, $t5, 48	# convert digit into ASCII
+	addiu	$v0, $v0, -1	# point to previous byte
+	add	$t6, $t6, 1
+	sb	$t5, 0($v0)	# store character in memory
+	bnez	$a0, L1	# loop if value is not 0
+	jr	$ra	# return to caller
 
 end_program:
