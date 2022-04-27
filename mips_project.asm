@@ -1,3 +1,5 @@
+#This project is the work of Basil Mari (student ID: 1191027), and Islam Jum'a (student ID: 1191375)
+
 .data
 fin: .asciiz "/home/basilmari/Desktop/mips_project/input.txt" # filename for input
 fout: .asciiz "/home/basilmari/Desktop/mips_project/output.txt" # filename for output
