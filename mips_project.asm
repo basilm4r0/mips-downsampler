@@ -183,7 +183,7 @@ flt_to_int:			#
 	move $a1, $t0
 	jal int2str		#convert integer to string
 
-	li $a2, 31
+	move $a2, $t6
 	move $a1, $v0	#write string to output file
 	move $a0, $s6
 	li $v0, 15
