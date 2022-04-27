@@ -9,7 +9,9 @@ fp3: .float 2
 fp4: .float 4
 fp5: .float 100
 prompt1: .asciiz "\nEnter \"1\" to downsample using mean or \"2\" to downsample using median:\n"
-prompt2: .asciiz "Ender the level of downsampling you wish to perform:\n"
+prompt2: .asciiz "Enter the level of downsampling you wish to perform:\n"
+error1: .asciiz "\nError: Matrix not divisible by 4\n"
+error2: .asciiz "\nError: Level cannot be obtained from matrix\n"
 
 .text
 #open a file for reading
@@ -37,29 +39,37 @@ li	$v0, 16       # system call for close file
 move	$a0, $s6      # file descriptor to close
 syscall            # close file
 
-la $s0, buffer	#address of buffer
-move $t0, $s0	#incrementing address
-li $t1, 0		#counter
-li $t2, 0		#converted integer value
+la	$s0, buffer	#address of buffer
+move	$t0, $s0	#incrementing address
+li	$t1, 0		#counter
+li	$t2, 0		#converted integer value
 
 
 # loop for parsing the buffer
 parseloop1:
-	lbu $t3, ($t0)
-	sb $0, ($t0)
-	blt $t3, 48, end1
-	bgt $t3, 57, end1
-	andi $t3,$t3,0x0F # where $t3 contains the ascii digit
-	mul $t2, $t2, 10
-	add $t2, $t2, $t3
-	addi $t0, $t0, 1
+	lbu	$t3, ($t0)
+	sb	$0, ($t0)
+	blt	$t3, 48, end1
+	bgt	$t3, 57, end1
+	andi	$t3,$t3,0x0F # where $t3 contains the ascii digit
+	mul	$t2, $t2, 10
+	add	$t2, $t2, $t3
+	addi	$t0, $t0, 1
 	j parseloop1
 end1:
-	addi $t0, $t0, 1
+addi $t0, $t0, 1
+
 
 move $s1, $t2	#order of matrix (4)
 move $t9, $s1	#variable matrix order (changes as matrix is downsampled)
 mul $t4, $s1, $s1	#number of elements in matrix (16)
+divu $t8, $s1, 2
+bne $t8, 1, no_error
+	la $a0, error1
+	li $v0, 4
+	syscall
+	j end_program
+no_error:
 sll $a0, $t4, 2		#size of array in bytes
 li  $v0, 9
 syscall			#allocate memory space for array
@@ -71,7 +81,7 @@ loop:
 	beq $t1, $t4, endloop
 
 	parseloop:	# loop for parsing the buffer
-		lbu $t3, ($t0)
+		lbu	$t3, ($t0)
 		sb $0, ($t0)
 		beq $t3, 32, end
 		beq $t3, 0, end
@@ -121,6 +131,14 @@ syscall
 li $v0, 5
 syscall
 move $s4, $v0
+addiu $t8, $s4, -1
+srlv $t8, $s1, $t8
+bne $t8, 0, no_error2
+	la $a0, error2
+	li $v0, 4
+	syscall
+	j end_program
+no_error2:
 
 li $t7, 1 #initialize process function counter to 0
 jal process
