@@ -66,6 +66,7 @@ move $s1, $t2	#order of matrix (4)
 move $t9, $s1	#variable matrix order (changes as matrix is downsampled)
 mul $t4, $s1, $s1	#number of elements in matrix (16)
 divu $t8, $s1, 2
+mfhi $t8
 bne $t8, 1, no_error
 	la $a0, error1
 	li $v0, 4
